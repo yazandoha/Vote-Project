@@ -1,6 +1,7 @@
 import {commentModel} from "../../../../DB/model/comment.model.js";
 import postModel from "../../../../DB/model/post.model.js";
 import cloudinary from "../../../services/cloudinary.js";
+import { pagination } from "../../../services/pagination.js";
 
 export const addPost = async(req,res)=>{
     try{ // note :: must add i nthe cloudinary >> every post in file (not all in the same file )
@@ -65,9 +66,11 @@ export const getPost = async(req,res)=>{
 // this function in the Children-parent case 2 (when i delete the commentId from the post model and set the postId feild in the comment model)
 export const getPosts = async(req,res)=>{
     try{
-        const posts = await postModel.find({}).populate([{
+        const {page,size} = req.query;
+        const {limit,skip}=pagination(page,size);
+        const posts = await postModel.find({}).limit(limit).skip(skip).populate([{
             path:'userId',
-            select:'userName profilePic -_id' //-_id means that dont show the _id feaild
+            select:'userName -_id' //-_id means that dont show the _id feaild
         }]);
         const postList=[];
         for (const post of posts) {
@@ -84,11 +87,12 @@ export const getPosts = async(req,res)=>{
 export const likePost = async(req,res)=>{
     try{
         const {id} = req.params;
-        const PostLike = await postModel.findByIdAndUpdate(id,
+        const PostLike = await postModel.findOneAndUpdate({_id:id},
             {
                 $addToSet:{likes:req.user._id}, //addToSet is the same as push , but the defferent is push can add the same value more one time but the addToSet is add the value just 1 time
-                $pull:{unlikes:req.user._id},
-                $inc:{counts:1}
+                //means that the user can't add two like in the same post
+                $pull:{unlikes:req.user._id}, // this mean remove the unlike user in the post if found , if not found not do anything
+                
             },{new:true});
         if(!PostLike){
             res.status(401).json({message:"error add like"});
@@ -102,11 +106,11 @@ export const likePost = async(req,res)=>{
 export const UnlikePost = async(req,res)=>{
     try{
         const {id} = req.params;
-        const PostLike = await postModel.findByIdAndUpdate(id,
+        const PostLike = await postModel.findOneAndUpdate({_id:id},
             {
                 $addToSet:{unlikes:req.user._id},
                 $pull:{likes:req.user._id},
-                $inc:{counts:-1}
+                
             },{new:true});
         if(!PostLike){
             res.status(401).json({message:"error add unlike"});

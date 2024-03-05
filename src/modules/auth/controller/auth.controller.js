@@ -4,7 +4,8 @@ import jwt from "jsonwebtoken";
 import sendEmail from "../../../services/email.js";
 
 const signup = async(req,res)=>{
-    const {name,email,password} = req.body;
+    const {name,email,password,role} = req.body;
+    
     try{
         const user = await userModel.findOne({email}).select("email");
         // res.json({message:"data",user});
@@ -15,7 +16,7 @@ const signup = async(req,res)=>{
             const hash = bcrypt.hashSync(password,parseInt(process.env.SALTROUND));
             //or
             //const hash = await bcrypt.hash(password,parseInt(process.env.SALTROUND));
-            const saveUser=await userModel.create({userName:name,email,password:hash});
+            const saveUser=await userModel.create({userName:name,email,password:hash,role});
             if(!saveUser){
                 res.status(400).json({message:"fail regester user"});
             }else{

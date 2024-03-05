@@ -20,7 +20,7 @@ const userSchema = new Schema({
     gender:{
         type:String,
         default:'male',
-        enum:['male','female'],
+        enum:["male","female"],
     },
     confirmEmail:{
         type:Boolean,
@@ -30,6 +30,11 @@ const userSchema = new Schema({
     coverPic:Array,
     phone:{
         type:String,
+    },
+    role:{
+        type:String,
+        default:'User',
+        enum:['User','Admin']
     }
 },{timestamps:true})
 
